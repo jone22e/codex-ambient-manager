@@ -45,15 +45,41 @@ html.codex-sidebar-on body{
 }
 
 #codex-env-sidebar header .refresh{
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 10px;
+  height: 34px;
+  padding: 6px 12px;
+  border-radius: 12px;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.25);
   color: rgba(255,255,255,.85);
   cursor: pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 #codex-env-sidebar header .refresh:hover{ background: rgba(255,255,255,.06); }
+#codex-env-sidebar header .refresh .icon{
+  display:inline-flex;
+  width:16px;
+  height:16px;
+}
+#codex-env-sidebar header .refresh svg{
+  width:100%;
+  height:100%;
+  stroke: rgba(255,255,255,.85);
+  stroke-width: 1.8;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 120ms ease;
+}
+#codex-env-sidebar header .refresh .label{
+  color: rgba(255,255,255,.9);
+}
+#codex-env-sidebar header .refresh:hover svg{ transform: rotate(-90deg); }
 
 #codex-env-sidebar .list{
   flex: 1;

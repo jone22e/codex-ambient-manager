@@ -69,8 +69,18 @@
     el.id = SIDEBAR_ID;
     el.innerHTML = `
       <header>
-        <div class="title">Ambientes</div>
-        <button class="refresh" type="button" title="Atualizar lista">Atualizar</button>
+        <div class="title">Environments</div>
+        <button class="refresh" type="button" title="Refresh" aria-label="Refresh ">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M21 12a9 9 0 0 0-9-9 9 9 0 0 0-8 4.47" />
+              <path d="M3 12a9 9 0 0 0 9 9 9 9 0 0 0 8-4.47" />
+              <path d="M3 5v5h5" />
+              <path d="M21 19v-5h-5" />
+            </svg>
+          </span>
+          <span class="label">Refresh</span>
+        </button>
       </header>
       <div class="list"></div>
       <div class="meta">
@@ -87,11 +97,11 @@
     console.log('setMeta');
     const el = qs("#"+SIDEBAR_ID);
     if (!el) return;
-    const env = state.selected || "Todos";
+    const env = state.selected || "All environments";
     qs(".m-env", el).textContent = env;
 
     const visible = countVisibleTasks();
-    qs(".m-count", el).textContent = `${visible} tarefas`;
+    qs(".m-count", el).textContent = `${visible} tasks`;
   }
 
   function renderSidebar(){
