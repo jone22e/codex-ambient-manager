@@ -73,16 +73,15 @@ html.codex-sidebar-on body{
   width: 100%;
   height: 36px;
   border-radius: 10px;
-  border: 1px solid transparent;
-  background: rgba(255,255,255,.04);
+  border: none;
+  background: transparent;
   color: rgba(255,255,255,.55);
   cursor: pointer;
   font-size: 16px;
 }
-#codex-env-sidebar .fav-toggle:hover{ background: rgba(255,255,255,.08); }
+#codex-env-sidebar .fav-toggle:hover{ color: rgba(255,255,255,.85); }
 #codex-env-sidebar .fav-toggle.on{
-  background: rgba(255, 201, 71, .18);
-  border-color: rgba(255, 201, 71, .35);
+  background: transparent;
   color: #ffd45e;
 }
 #codex-env-sidebar .fav-toggle.spacer{

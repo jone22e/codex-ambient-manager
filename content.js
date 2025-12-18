@@ -84,6 +84,7 @@
   }
 
   function setMeta(){
+    console.log('setMeta');
     const el = qs("#"+SIDEBAR_ID);
     if (!el) return;
     const env = state.selected || "Todos";
@@ -168,6 +169,7 @@
   }
 
   function applyTaskFilter(){
+    console.log('applyTaskFilter');
     const rows = qsa(TASK_ROW_SEL);
     const selected = state.selected;
 
@@ -181,6 +183,7 @@
   }
 
   function updateSectionVisibility(){
+    console.log('updateSectionVisibility');
     // Quando aplicamos o filtro por ambiente, o Codex ainda mantém os headers
     // ("Hoje", "Últimos 7 dias", etc.). Se todas as linhas de uma seção estiverem
     // ocultas, escondemos o header para evitar seções vazias.
@@ -357,12 +360,22 @@
     // container, o filtro passa a aplicar só na primeira seção.
     //
     // Solução: observar o documento e reaplicar o filtro de forma debounce.
+    // Também ignoramos mutações geradas pela nossa própria sidebar para evitar loops.
+    const container = findTaskContainer() || document.body;
     const onMut = debounce(() => {
       applyTaskFilter();
     }, 200);
 
-    const mo = new MutationObserver(() => onMut());
-    mo.observe(document.body, { childList: true, subtree: true });
+    const mo = new MutationObserver((mutations) => {
+      const sidebar = qs("#"+SIDEBAR_ID);
+      // Se todas as mutações são dentro da sidebar, ignora.
+      if (sidebar){
+        const onlySidebar = mutations.every(m => sidebar === m.target || sidebar.contains(m.target));
+        if (onlySidebar) return;
+      }
+      onMut();
+    });
+    mo.observe(container, { childList: true, subtree: true });
   }
 
   async function init(){
