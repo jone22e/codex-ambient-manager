@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Codex Sidebar Ambientes (Sync)",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Sidebar fixa de ambientes: sincroniza com dropdown e filtra tarefas (sem scrollbar).",
   "content_scripts": [
     {
