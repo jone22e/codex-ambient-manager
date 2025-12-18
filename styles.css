@@ -1,5 +1,5 @@
 :root{
-  --csw: 260px;
+  --csw: 320px;
   --cs-z: 999999;
 }
 
@@ -10,10 +10,8 @@ html.codex-sidebar-on body{
 }
 
 html.codex-sidebar-on body{
-  /* Em vez de margin-left (que soma com w-screen), usamos padding-left e compensamos a largura */
-  padding-left: var(--csw) !important;
+  /* Sidebar passa a ser um overlay fixo, não desloca o layout da página */
   box-sizing: border-box !important;
-  width: 100vw !important;
 }
 
 /* Sidebar */
