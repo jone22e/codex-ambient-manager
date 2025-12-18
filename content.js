@@ -2,6 +2,7 @@
   const SIDEBAR_ID = "codex-env-sidebar";
   const STORAGE_KEY = "codexSidebar.env";
   const FAVORITES_KEY = "codexSidebar.env.favs";
+  const COLLAPSE_KEY = "codexSidebar.env.collapsed";
   const SIDEBAR_W_CSSVAR = "--csw";
   const CODEX_PATH_PREFIX = "/codex";
   const CODEX_HOST = "https://chatgpt.com";
@@ -20,6 +21,7 @@
     envs: [],
     selected: null,
     favorites: [],
+    listCollapsed: false,
     updating: false,
   };
 
@@ -65,6 +67,17 @@
   function saveFavorites(){
     try{
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites));
+    } catch {}
+  }
+
+  function loadCollapsed(){
+    try{
+      state.listCollapsed = localStorage.getItem(COLLAPSE_KEY) === "1";
+    } catch {}
+  }
+  function saveCollapsed(){
+    try{
+      localStorage.setItem(COLLAPSE_KEY, state.listCollapsed ? "1" : "0");
     } catch {}
   }
 
@@ -167,17 +180,36 @@
     const list = qs(".list", el);
     list.innerHTML = "";
 
-    const addBtn = (name, active, isFav=false) => {
+    const addBtn = (name, options={}) => {
+      const {
+        active=false,
+        isFav=false,
+        parent=null,
+        isToggle=false,
+      } = options;
       const row = document.createElement("div");
-      row.className = "env-row" + (isFav ? " fav" : "");
+      row.className = "env-row" + (isFav ? " fav" : "") + (isToggle ? " toggle-row" : "");
 
       const b = document.createElement("button");
       b.type = "button";
       b.className = "env" + (active ? " active" : "");
-      b.textContent = name;
-      b.addEventListener("click", () => onSelectEnv(name === "Todos" ? null : name));
+      if (isToggle){
+        b.innerHTML = `<span class="label">${name}</span><span class="chevron" aria-hidden="true">${state.listCollapsed ? "&#9656;" : "&#9662;"}</span>`;
+        b.addEventListener("click", () => {
+          state.listCollapsed = !state.listCollapsed;
+          saveCollapsed();
+          renderSidebar();
+        });
+      } else {
+        b.textContent = name;
+        b.addEventListener("click", () => onSelectEnv(name));
+      }
 
-      if (name !== "Todos"){
+      if (isToggle){
+        const spacer = document.createElement("div");
+        spacer.className = "fav-toggle spacer";
+        row.appendChild(spacer);
+      } else if (name !== "Todos"){
         const favBtn = document.createElement("button");
         favBtn.type = "button";
         favBtn.className = "fav-toggle" + (isFav ? " on" : "");
@@ -196,16 +228,23 @@
       }
 
       row.appendChild(b);
-      list.appendChild(row);
+      (parent || list).appendChild(row);
     };
 
     const sorted = [...state.envs].sort((a,b)=>a.localeCompare(b));
     const favorites = sorted.filter(env => state.favorites.includes(env));
     const others = sorted.filter(env => !state.favorites.includes(env));
 
-    favorites.forEach(env => addBtn(env, env === state.selected, true));
-    addBtn("Todos", !state.selected);
-    others.forEach(env => addBtn(env, env === state.selected, false));
+    favorites.forEach(env => addBtn(env, { active: env === state.selected, isFav: true, parent: list }));
+
+    addBtn("Todos", { isToggle: true, parent: list });
+
+    const envContainer = document.createElement("div");
+    envContainer.className = "env-container" + (state.listCollapsed ? " collapsed" : "");
+    list.appendChild(envContainer);
+
+    others.forEach(env => addBtn(env, { active: env === state.selected, isFav: false, parent: envContainer }));
+
 
     setMeta();
   }
@@ -385,7 +424,7 @@
 
   async function onSelectEnv(envNameOrNull){
     // Sidebar -> mesma ação do dropdown
-    if (!envNameOrNull){
+    if (state.selected === envNameOrNull){
       state.selected = null;
       saveSelected(null);
       renderSidebar();
@@ -448,6 +487,7 @@
   async function init(){
     loadSelected();
     loadFavorites();
+    loadCollapsed();
     observeUrlChanges();
     hookDropdownClick();
 
