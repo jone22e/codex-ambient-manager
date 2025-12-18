@@ -3,6 +3,8 @@
   const STORAGE_KEY = "codexSidebar.env";
   const FAVORITES_KEY = "codexSidebar.env.favs";
   const SIDEBAR_W_CSSVAR = "--csw";
+  const CODEX_PATH_PREFIX = "/codex";
+  const CODEX_HOST = "https://chatgpt.com";
 
   // Botão do dropdown (você mostrou no HTML)
   const ENV_DROPDOWN_BTN_SEL = 'button[aria-label="Exibir todos os ambientes de programação"]';
@@ -25,6 +27,12 @@
   const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  const isOnCodexPage = () => {
+    if (location.origin !== CODEX_HOST) return false;
+    const normalizedPath = location.pathname.replace(/\/+$/, "") || "/";
+    return normalizedPath === CODEX_PATH_PREFIX;
+  };
 
   function debounce(fn, wait=200){
     let t = null;
@@ -63,8 +71,6 @@
   function ensureSidebar(){
     if (qs("#"+SIDEBAR_ID)) return;
 
-    document.documentElement.classList.add("codex-sidebar-on");
-
     const el = document.createElement("div");
     el.id = SIDEBAR_ID;
     el.innerHTML = `
@@ -91,6 +97,56 @@
     document.body.appendChild(el);
 
     qs(".refresh", el).addEventListener("click", () => refreshFromDropdown(true));
+  }
+
+  function setSidebarVisibility(visible){
+    const el = qs("#"+SIDEBAR_ID);
+    if (!el) return;
+    el.style.display = visible ? "" : "none";
+    document.documentElement.classList.toggle("codex-sidebar-on", visible);
+  }
+
+  function handleRouteChange(){
+    const onCodex = isOnCodexPage();
+    const sidebar = qs("#"+SIDEBAR_ID);
+    if (!onCodex){
+      if (sidebar) setSidebarVisibility(false);
+      return;
+    }
+    if (!sidebar) ensureSidebar();
+    setSidebarVisibility(true);
+    renderSidebar();
+    applyTaskFilter();
+  }
+
+  function observeUrlChanges(){
+    let lastHref = location.href;
+    const check = () => {
+      if (location.href === lastHref) return;
+      lastHref = location.href;
+      handleRouteChange();
+    };
+
+    const origPush = history.pushState;
+    history.pushState = function(...args){
+      const ret = origPush.apply(this, args);
+      check();
+      return ret;
+    };
+
+    const origReplace = history.replaceState;
+    history.replaceState = function(...args){
+      const ret = origReplace.apply(this, args);
+      check();
+      return ret;
+    };
+
+    window.addEventListener("popstate", check);
+
+    const mo = new MutationObserver(() => {
+      if (location.href !== lastHref) check();
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
   }
 
   function setMeta(){
@@ -180,6 +236,7 @@
 
   function applyTaskFilter(){
     console.log('applyTaskFilter');
+    if (!isOnCodexPage()) return;
     const rows = qsa(TASK_ROW_SEL);
     const selected = state.selected;
 
@@ -391,9 +448,13 @@
   async function init(){
     loadSelected();
     loadFavorites();
-    ensureSidebar();
+    observeUrlChanges();
     hookDropdownClick();
 
+    handleRouteChange();
+    if (!isOnCodexPage()) return;
+
+    ensureSidebar();
     // Primeira renderização: tenta puxar lista completa via dropdown (sem travar)
     // Não força abrir: só atualiza se o popover existir; senão deixa vazio até o usuário abrir.
     await refreshFromDropdown(false);
