@@ -14,6 +14,10 @@ html.codex-sidebar-on body{
   box-sizing: border-box !important;
 }
 
+html.codex-sidebar-on .min-h-0.flex-1 > div:nth-child(2){
+  margin-left: calc(48rem - 480px) !important;
+}
+
 /* Sidebar */
 #codex-env-sidebar{
   position: fixed;
