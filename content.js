@@ -1,6 +1,7 @@
 (() => {
   const SIDEBAR_ID = "codex-env-sidebar";
   const STORAGE_KEY = "codexSidebar.env";
+  const FAVORITES_KEY = "codexSidebar.env.favs";
   const SIDEBAR_W_CSSVAR = "--csw";
 
   // Botão do dropdown (você mostrou no HTML)
@@ -16,6 +17,7 @@
   const state = {
     envs: [],
     selected: null,
+    favorites: [],
     updating: false,
   };
 
@@ -42,6 +44,19 @@
     try {
       if (!v) localStorage.removeItem(STORAGE_KEY);
       else localStorage.setItem(STORAGE_KEY, v);
+    } catch {}
+  }
+  function loadFavorites(){
+    try{
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      if (!raw) return;
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) state.favorites = arr.filter(x => typeof x === "string");
+    } catch {}
+  }
+  function saveFavorites(){
+    try{
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites));
     } catch {}
   }
 
@@ -85,19 +100,45 @@
     const list = qs(".list", el);
     list.innerHTML = "";
 
-    const addBtn = (name, active) => {
+    const addBtn = (name, active, isFav=false) => {
+      const row = document.createElement("div");
+      row.className = "env-row" + (isFav ? " fav" : "");
+
       const b = document.createElement("button");
       b.type = "button";
       b.className = "env" + (active ? " active" : "");
       b.textContent = name;
       b.addEventListener("click", () => onSelectEnv(name === "Todos" ? null : name));
-      list.appendChild(b);
+
+      if (name !== "Todos"){
+        const favBtn = document.createElement("button");
+        favBtn.type = "button";
+        favBtn.className = "fav-toggle" + (isFav ? " on" : "");
+        favBtn.title = isFav ? "Remover dos favoritos" : "Adicionar aos favoritos";
+        favBtn.textContent = isFav ? "★" : "☆";
+        favBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleFavorite(name);
+        });
+        row.appendChild(favBtn);
+      } else {
+        // alinhamento consistente
+        const spacer = document.createElement("div");
+        spacer.className = "fav-toggle spacer";
+        row.appendChild(spacer);
+      }
+
+      row.appendChild(b);
+      list.appendChild(row);
     };
 
-    addBtn("Todos", !state.selected);
+    const sorted = [...state.envs].sort((a,b)=>a.localeCompare(b));
+    const favorites = sorted.filter(env => state.favorites.includes(env));
+    const others = sorted.filter(env => !state.favorites.includes(env));
 
-    const envs = [...state.envs].sort((a,b)=>a.localeCompare(b));
-    envs.forEach(env => addBtn(env, env === state.selected));
+    favorites.forEach(env => addBtn(env, env === state.selected, true));
+    addBtn("Todos", !state.selected);
+    others.forEach(env => addBtn(env, env === state.selected, false));
 
     setMeta();
   }
@@ -241,6 +282,10 @@
       if (changed){
         state.envs = envs;
 
+        // Remove favoritos que não existem mais
+        state.favorites = state.favorites.filter(f => state.envs.includes(f));
+        saveFavorites();
+
         // Se o selecionado sumiu, volta para Todos
         if (state.selected && !state.envs.includes(state.selected)){
           state.selected = null;
@@ -287,6 +332,15 @@
     await clickEnvInDropdown(envNameOrNull);
   }
 
+  function toggleFavorite(name){
+    const set = new Set(state.favorites);
+    if (set.has(name)) set.delete(name);
+    else set.add(name);
+    state.favorites = Array.from(set);
+    saveFavorites();
+    renderSidebar();
+  }
+
   function hookDropdownClick(){
     // Quando o usuário clicar no dropdown, atualiza a lista da sidebar
     document.addEventListener("click", (e) => {
@@ -313,6 +367,7 @@
 
   async function init(){
     loadSelected();
+    loadFavorites();
     ensureSidebar();
     hookDropdownClick();
 
