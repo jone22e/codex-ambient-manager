@@ -413,6 +413,9 @@
     renderSidebar();
     applyTaskFilter();
     observeTasks();
+
+    // Após carregar tudo, dispara um refresh forçado para preencher a lista automaticamente.
+    setTimeout(() => refreshFromDropdown(true), 300);
   }
 
   // Aguarda a UI montar
